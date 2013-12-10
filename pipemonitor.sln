@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pipemonitor", "pipemonitor\pipemonitor.vcxproj", "{BEDA66CF-FEBA-47A1-9FDD-1A59772848A8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "injectdll", "injectdll\injectdll.vcxproj", "{1BE0A667-E4AD-401C-9896-09BC67057567}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "demon", "demon\demon.vcxproj", "{031FBB27-3364-4F15-AC92-AB38121317CE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BEDA66CF-FEBA-47A1-9FDD-1A59772848A8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BEDA66CF-FEBA-47A1-9FDD-1A59772848A8}.Debug|Win32.Build.0 = Debug|Win32
+		{BEDA66CF-FEBA-47A1-9FDD-1A59772848A8}.Release|Win32.ActiveCfg = Release|Win32
+		{BEDA66CF-FEBA-47A1-9FDD-1A59772848A8}.Release|Win32.Build.0 = Release|Win32
+		{1BE0A667-E4AD-401C-9896-09BC67057567}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1BE0A667-E4AD-401C-9896-09BC67057567}.Debug|Win32.Build.0 = Debug|Win32
+		{1BE0A667-E4AD-401C-9896-09BC67057567}.Release|Win32.ActiveCfg = Release|Win32
+		{1BE0A667-E4AD-401C-9896-09BC67057567}.Release|Win32.Build.0 = Release|Win32
+		{031FBB27-3364-4F15-AC92-AB38121317CE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{031FBB27-3364-4F15-AC92-AB38121317CE}.Debug|Win32.Build.0 = Debug|Win32
+		{031FBB27-3364-4F15-AC92-AB38121317CE}.Release|Win32.ActiveCfg = Release|Win32
+		{031FBB27-3364-4F15-AC92-AB38121317CE}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
