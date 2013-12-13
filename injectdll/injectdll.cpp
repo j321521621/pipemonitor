@@ -2,41 +2,26 @@
 //
 
 #include "stdafx.h"
-#include "../detours/include/detours.h"
 #include <windows.h>
-
-static int (WINAPI* OLD_MessageBoxW)(HWND hWnd,LPCWSTR lpText,LPCWSTR lpCaption,UINT uType)=MessageBoxW;  
-int WINAPI NEW_MessageBoxW(HWND hWnd,LPCWSTR lpText,LPCWSTR lpCaption,UINT uType)  
-{  
-
-	//修改输入参数，调用原函数  
-	int ret=OLD_MessageBoxW(hWnd,L"输入参数已修改",L"[测试]",uType);  
-	return ret;  
-}  
+#include "../detours/include/detours.h"
+#include "WriteFile.h"
+#include "MessageBox.h"
 
 VOID Hook()  
 {  
-	//DetourRestoreAfterWith();  
-	DetourTransactionBegin();  
-	DetourUpdateThread(GetCurrentThread());  
-
-	//这里可以连续多次调用DetourAttach，表明HOOK多个函数  
+	DetourTransactionBegin();
 	DetourAttach(&(PVOID&)OLD_MessageBoxW,NEW_MessageBoxW);  
-
-	DetourTransactionCommit();  
-}  
+	DetourAttach(&(PVOID&)OLD_WriteFile,NEW_WriteFile);  
+	DetourTransactionCommit();
+}
 
 VOID UnHook()  
 {  
 	DetourTransactionBegin();  
-	DetourUpdateThread(GetCurrentThread());  
-
-	//这里可以连续多次调用DetourDetach,表明撤销多个函数HOOK  
 	DetourDetach(&(PVOID&)OLD_MessageBoxW,NEW_MessageBoxW);  
-
+	DetourDetach(&(PVOID&)OLD_WriteFile,NEW_WriteFile);  
 	DetourTransactionCommit();  
-
-}  
+}
 
 unsigned __stdcall threadproc(void*)
 {

@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\function">
+      <UniqueIdentifier>{599700bb-c054-4d37-8d0d-1555433f91c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ipc">
+      <UniqueIdentifier>{c10a6e1e-ca08-4825-b395-da79d705c790}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -23,6 +29,15 @@
     </ClInclude>
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WriteFile.h">
+      <Filter>Source Files\function</Filter>
+    </ClInclude>
+    <ClInclude Include="MessageBox.h">
+      <Filter>Source Files\function</Filter>
+    </ClInclude>
+    <ClInclude Include="ipc.h">
+      <Filter>Source Files\ipc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

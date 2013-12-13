@@ -1,0 +1,8 @@
+*.obj
+*.suo
+*.sdf
+*.opensdf
+*.user
+ipch/*
+**/Release/**
+**/Debug/**

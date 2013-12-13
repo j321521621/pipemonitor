@@ -77,10 +77,45 @@ inject_ret inject(DWORD pid,LPWSTR path)
 	return S_INJECT;
 }
 
+void pipeserve()
+{
+	
+
+	// Call the subroutine to connect to the new client
+
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
-	if(inject(getpid(L"demon.exe"),L"E:\\code\\sw\\pipemonitor\\Debug\\injectdll.dll")!=S_INJECT)
+	HANDLE pipe = CreateNamedPipe( 
+		L"\\\\.\\pipe\\7E90B034-BDDF-4CD5-9638-371EB9918763",
+		PIPE_ACCESS_OUTBOUND,    // overlapped mode 
+		PIPE_TYPE_MESSAGE |      // message-type pipe 
+		PIPE_READMODE_MESSAGE |  // message-read mode 
+		PIPE_WAIT,               // blocking mode 
+		1,               // number of instances 
+		4096*sizeof(TCHAR),   // output buffer size 
+		4096*sizeof(TCHAR),   // input buffer size 
+		0,            // client time-out 
+		NULL);                   // default security attributes 
+
+	if (pipe == INVALID_HANDLE_VALUE) 
+	{
+		DWORD err=GetLastError();
+		assert(0);
+		return -1;
+	}
+
+	if(inject(getpid(L"demon.exe"),L"E:\\code\\me\\pipemonitor\\Debug\\injectdll.dll")!=S_INJECT)
 	{
 		assert(0);
+		return -2;
+	}
+
+
+	if(!ConnectNamedPipe(pipe,NULL))
+	{
+		assert(0);
+		return -3;
 	}
 }
