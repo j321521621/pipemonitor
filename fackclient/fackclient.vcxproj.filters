@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\ipc">
-      <UniqueIdentifier>{aa700cf2-8f00-42d0-946d-4ac9be23c4b9}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -27,25 +24,13 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ipcserver.h">
-      <Filter>Source Files\ipc</Filter>
-    </ClInclude>
-    <ClInclude Include="ipc_handler.h">
-      <Filter>Source Files\ipc</Filter>
-    </ClInclude>
-    <ClInclude Include="printer.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pipemonitor.cpp">
+    <ClCompile Include="fackclient.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ipcserver.cpp">
-      <Filter>Source Files\ipc</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

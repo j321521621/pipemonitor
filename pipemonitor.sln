@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "injectdll", "injectdll\inje
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "demon", "demon\demon.vcxproj", "{031FBB27-3364-4F15-AC92-AB38121317CE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fackclient", "fackclient\fackclient.vcxproj", "{75D39C3C-01DC-4DF9-8266-8D8B106077E9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -25,6 +27,10 @@ Global
 		{031FBB27-3364-4F15-AC92-AB38121317CE}.Debug|Win32.Build.0 = Debug|Win32
 		{031FBB27-3364-4F15-AC92-AB38121317CE}.Release|Win32.ActiveCfg = Release|Win32
 		{031FBB27-3364-4F15-AC92-AB38121317CE}.Release|Win32.Build.0 = Release|Win32
+		{75D39C3C-01DC-4DF9-8266-8D8B106077E9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{75D39C3C-01DC-4DF9-8266-8D8B106077E9}.Debug|Win32.Build.0 = Debug|Win32
+		{75D39C3C-01DC-4DF9-8266-8D8B106077E9}.Release|Win32.ActiveCfg = Release|Win32
+		{75D39C3C-01DC-4DF9-8266-8D8B106077E9}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

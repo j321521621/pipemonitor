@@ -2,6 +2,8 @@
 //
 
 #include "stdafx.h"
+#include "ipcserver.h"
+#include "printer.h"
 #include <windows.h>
 #include <tlhelp32.h>
 #include <Psapi.h>
@@ -77,13 +79,7 @@ inject_ret inject(DWORD pid,LPWSTR path)
 	return S_INJECT;
 }
 
-void pipeserve()
-{
-	
 
-	// Call the subroutine to connect to the new client
-
-}
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -106,16 +102,14 @@ int _tmain(int argc, _TCHAR* argv[])
 		return -1;
 	}
 
-	if(inject(getpid(L"demon.exe"),L"E:\\code\\me\\pipemonitor\\Debug\\injectdll.dll")!=S_INJECT)
+	/*if(inject(getpid(L"demon.exe"),L"E:\\code\\me\\pipemonitor\\Debug\\injectdll.dll")!=S_INJECT)
 	{
 		assert(0);
 		return -2;
-	}
+	}*/
 
+	printer_factory prfct;
 
-	if(!ConnectNamedPipe(pipe,NULL))
-	{
-		assert(0);
-		return -3;
-	}
+	ipc_server pps;
+	pps.serve(&prfct);
 }

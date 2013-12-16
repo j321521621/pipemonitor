@@ -2,27 +2,73 @@
 //
 
 #include "stdafx.h"
-#include <windows.h>
 #include "../detours/include/detours.h"
 #include "WriteFile.h"
 #include "MessageBox.h"
+#include <vector>
+using std::vector;
+#include <windows.h>
+#include <tlhelp32.h>
+
+
+vector<HANDLE> allthread()
+{
+	vector<HANDLE> ret;
+
+	THREADENTRY32 th32;
+	th32.dwSize = sizeof(th32);
+	HANDLE hProcessSnap = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+	if(hProcessSnap == INVALID_HANDLE_VALUE)
+	{
+		printf("CreateToolhelp32Snapshotµ÷ÓÃÊ§°Ü");
+		return ret;
+	}
+	for(BOOL flag = ::Thread32First(hProcessSnap,&th32);flag;flag=::Thread32Next(hProcessSnap,&th32))
+	{
+		ret.push_back(OpenThread(THREAD_ALL_ACCESS,FALSE,th32.th32ThreadID));
+	}
+	return ret;
+}
 
 VOID Hook()  
 {  
-	DetourTransactionBegin();
-	DetourAttach(&(PVOID&)OLD_MessageBoxW,NEW_MessageBoxW);  
-	DetourAttach(&(PVOID&)OLD_WriteFile,NEW_WriteFile);  
+	DetourTransactionBegin();  
+
+	vector<HANDLE> thread=allthread();
+	for(vector<HANDLE>::iterator it=thread.begin();it!=thread.end();++it)
+	{
+		DetourUpdateThread(*it);  
+	}
+
+	DetourAttach(&(PVOID&)OLD_MessageBoxW,NEW_MessageBoxW);
+
 	DetourTransactionCommit();
-}
+
+	for(vector<HANDLE>::iterator it=thread.begin();it!=thread.end();++it)
+	{
+		CloseHandle(*it);  
+	}
+}  
 
 VOID UnHook()  
 {  
 	DetourTransactionBegin();  
-	DetourDetach(&(PVOID&)OLD_MessageBoxW,NEW_MessageBoxW);  
-	DetourDetach(&(PVOID&)OLD_WriteFile,NEW_WriteFile);  
-	DetourTransactionCommit();  
-}
+	vector<HANDLE> thread=allthread();
+	for(vector<HANDLE>::iterator it=thread.begin();it!=thread.end();++it)
+	{
+		DetourUpdateThread(*it);  
+	}
 
+	DetourDetach(&(PVOID&)OLD_MessageBoxW,NEW_MessageBoxW);  
+
+	DetourTransactionCommit();
+
+	for(vector<HANDLE>::iterator it=thread.begin();it!=thread.end();++it)
+	{
+		CloseHandle(*it);  
+	}
+
+}  
 unsigned __stdcall threadproc(void*)
 {
 	::MessageBoxW(NULL,L"inject",L"success",MB_OK);
