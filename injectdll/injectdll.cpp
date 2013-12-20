@@ -5,75 +5,85 @@
 #include "../detours/include/detours.h"
 #include "WriteFile.h"
 #include "MessageBox.h"
+#include "ipc.h"
 #include <vector>
 using std::vector;
 #include <windows.h>
 #include <tlhelp32.h>
 
 
+
 vector<HANDLE> allthread()
 {
 	vector<HANDLE> ret;
 
-	THREADENTRY32 th32;
-	th32.dwSize = sizeof(th32);
-	HANDLE hProcessSnap = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
-	if(hProcessSnap == INVALID_HANDLE_VALUE)
+	HANDLE hThreadSnap = CreateToolhelp32Snapshot( TH32CS_SNAPTHREAD, 0 ); 
+	if( hThreadSnap == INVALID_HANDLE_VALUE ) 
 	{
-		printf("CreateToolhelp32Snapshot调用失败");
+		return ret; 
+	}
+
+	DWORD dwOwnerPID=GetCurrentProcessId();
+	THREADENTRY32 te32; 
+	te32.dwSize = sizeof(THREADENTRY32 ); 
+
+	if( !Thread32First( hThreadSnap, &te32 ) ) 
+	{
+		CloseHandle( hThreadSnap );
 		return ret;
 	}
-	for(BOOL flag = ::Thread32First(hProcessSnap,&th32);flag;flag=::Thread32Next(hProcessSnap,&th32))
-	{
-		ret.push_back(OpenThread(THREAD_ALL_ACCESS,FALSE,th32.th32ThreadID));
-	}
+
+	do
+	{ 
+		if( te32.th32OwnerProcessID == dwOwnerPID && te32.th32ThreadID!=GetCurrentThreadId())
+		{
+			HANDLE handle=OpenThread(THREAD_ALL_ACCESS,FALSE,te32.th32ThreadID);
+			if(handle)
+			{
+				ret.push_back(handle);
+			}
+		}
+	} while(Thread32Next(hThreadSnap,&te32));
+
+	CloseHandle( hThreadSnap );
+
 	return ret;
 }
 
-VOID Hook()  
-{  
-	DetourTransactionBegin();  
+DWORD Hook(PVOID *ppPointer,PVOID pDetour)
+{
+	DetourTransactionBegin();
 
 	vector<HANDLE> thread=allthread();
 	for(vector<HANDLE>::iterator it=thread.begin();it!=thread.end();++it)
 	{
-		DetourUpdateThread(*it);  
+		DetourUpdateThread(*it);
 	}
 
-	DetourAttach(&(PVOID&)OLD_MessageBoxW,NEW_MessageBoxW);
+	DetourAttach(ppPointer,pDetour);
 
-	DetourTransactionCommit();
-
-	for(vector<HANDLE>::iterator it=thread.begin();it!=thread.end();++it)
-	{
-		CloseHandle(*it);  
-	}
-}  
-
-VOID UnHook()  
-{  
-	DetourTransactionBegin();  
-	vector<HANDLE> thread=allthread();
-	for(vector<HANDLE>::iterator it=thread.begin();it!=thread.end();++it)
-	{
-		DetourUpdateThread(*it);  
-	}
-
-	DetourDetach(&(PVOID&)OLD_MessageBoxW,NEW_MessageBoxW);  
-
-	DetourTransactionCommit();
+	DWORD ret=DetourTransactionCommit();
 
 	for(vector<HANDLE>::iterator it=thread.begin();it!=thread.end();++it)
 	{
 		CloseHandle(*it);  
 	}
 
-}  
+	return ret;
+}
+
+
 unsigned __stdcall threadproc(void*)
 {
-	::MessageBoxW(NULL,L"inject",L"success",MB_OK);
-	Hook();  
-	MessageBoxW(0,L"正常消息框",L"测试",0);  
-	UnHook();  
+	::MessageBox(NULL,L" success",L"注入成功",MB_OK);
+
+	logger=new ipc();
+	if(!logger->init())
+	{
+		::MessageBox(NULL,L"error",L"管道初始化失败",MB_OK);
+		return -1;
+	}
+
+	Hook(&(PVOID&)OLD_WriteFile,NEW_WriteFile);
 	return 0;
 }

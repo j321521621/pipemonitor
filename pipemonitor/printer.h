@@ -5,6 +5,7 @@
 #include <string>
 using std::string;
 
+
 class printer:public ipc_handler
 {
 public:
@@ -13,25 +14,25 @@ public:
 
 	}
 
-	void connect() override
+	void connect(ipc_handler_mode mode) override
 	{
-		printf("[%d] === CONNECT ===\n",m_index);
+		printf("[%d][%s] === CONNECT ===\n",m_index,mode==sync_mode?"S":mode==async_mode?"A":"T");
 	}
 
-	void disconnect() override
+	void disconnect(ipc_handler_mode mode) override
 	{
-		printf("[%d] === DISCONNECT ===\n",m_index);
+		printf("[%d][%s] === DISCONNECT ===\n",m_index,mode==sync_mode?"S":mode==async_mode?"A":"T");
 	}
 
-	void handle(char *buf,int size)
+	void handle(ipc_handler_mode mode,string data)
 	{
-		string str(buf,size);
-		printf("[%d] %s\n",m_index,str.c_str());
+		wstring wstr((PWCHAR)(data.c_str()),data.size()/2);
+		wprintf(L"[%d][%s] %s\n",m_index,mode==sync_mode?"S":mode==async_mode?"A":"T",wstr.c_str());
 	}
 
-	void exception()
+	void exception(ipc_handler_mode mode,ipc_handler_exception)
 	{
-		printf("[%d] === EXCEPTION ===\n",m_index);
+		printf("[%d][%s] === EXCEPTION ===\n",m_index,mode==sync_mode?"S":mode==async_mode?"A":"T");
 	}
 
 private:

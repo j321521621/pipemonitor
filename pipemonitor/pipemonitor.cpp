@@ -12,77 +12,16 @@
 #include <assert.h>
 using namespace::std;
 
-typedef enum 
-{
-	S_INJECT,
-	E_INJECT_OPENPROCESS,
-	E_INJECT_VIRTUALALLOCEX,
-	E_INJECT_WRITEPROCESSMEMORY,
-	E_INJECT_GETMODULEHANDLE,
-	E_INJECT_CREATEREMOTETHREAD,
-} inject_ret;
-
-DWORD getpid(wstring processname)
-{
-	DWORD ret=NULL;
-	HANDLE hProcs=0;
-	if ( hProcs = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) )
-	{
-		PROCESSENTRY32 pe32;
-		pe32.dwSize = sizeof( PROCESSENTRY32 );
-		BOOL ok = Process32First(hProcs, &pe32);
-		while (ok)
-		{
-			if(processname==pe32.szExeFile)
-			{
-				ret=pe32.th32ProcessID;
-				break;
-			}
-			ok = Process32Next(hProcs, &pe32);
-		}
-		CloseHandle(hProcs);
-	}
-	return ret;
-};
-
-inject_ret inject(DWORD pid,LPWSTR path)
-{
-	HANDLE hProcess=OpenProcess(PROCESS_ALL_ACCESS,FALSE,pid);
-	if(hProcess==NULL)
-	{
-		return E_INJECT_OPENPROCESS;
-	}
-
-	VOID *pLibRemote = ::VirtualAllocEx(hProcess,NULL,2*wcslen(path)+2,MEM_COMMIT,PAGE_READWRITE);
-	if(pLibRemote==NULL)
-	{
-		return E_INJECT_VIRTUALALLOCEX;
-	}
-
-	if(::WriteProcessMemory( hProcess,pLibRemote,(void*)path,2*wcslen(path)+2,NULL)==0)
-	{
-		return E_INJECT_WRITEPROCESSMEMORY;
-	}
-	
-	HMODULE hKernel32 = ::GetModuleHandle(L"Kernel32");
-	if(hKernel32==NULL)
-	{
-		return E_INJECT_GETMODULEHANDLE;
-	}
-
-	HANDLE hThread = ::CreateRemoteThread( hProcess,NULL,0,(LPTHREAD_START_ROUTINE) ::GetProcAddress(hKernel32,"LoadLibraryW"),pLibRemote,0,NULL);
-	if(hThread==NULL)
-	{
-		return E_INJECT_CREATEREMOTETHREAD;
-	}
-
-	return S_INJECT;
-}
 
 
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	if(!CreateMutex(NULL,TRUE,L"E24EE079-73DC-4617-8658-5FAB54BD1F13") || GetLastError()==ERROR_ALREADY_EXISTS)
+	{
+		return 0;
+	}
+
 	HANDLE pipe = CreateNamedPipe( 
 		L"\\\\.\\pipe\\7E90B034-BDDF-4CD5-9638-371EB9918763",
 		PIPE_ACCESS_OUTBOUND,    // overlapped mode 
@@ -102,14 +41,8 @@ int _tmain(int argc, _TCHAR* argv[])
 		return -1;
 	}
 
-	/*if(inject(getpid(L"demon.exe"),L"E:\\code\\me\\pipemonitor\\Debug\\injectdll.dll")!=S_INJECT)
-	{
-		assert(0);
-		return -2;
-	}*/
-
 	printer_factory prfct;
 
-	ipc_server pps;
-	pps.serve(&prfct);
+	ipc_server pps(&prfct);
+	pps.serve();
 }

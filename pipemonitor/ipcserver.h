@@ -2,12 +2,14 @@
 
 #include "ipc_handler.h";
 #include <Windows.h>
+#include <string>
+using namespace std;
 
 class ipc_server
 {
 public:
-	ipc_server();
-	DWORD serve(ipc_handler_factory* factory);
+	ipc_server(ipc_handler_factory *factory);
+	DWORD serve();
 
 private:
 	const static int BUFSIZE=4096;
@@ -17,24 +19,25 @@ private:
 
 	typedef struct 
 	{ 
-		OVERLAPPED oOverlap; 
-		HANDLE hPipeInst; 
-		CHAR chRequest[BUFSIZE]; 
-		DWORD cbRead;
-		DWORD dwState; 
-		BOOL fPendingIO;
+		HANDLE handle; 
+		OVERLAPPED overlap; 
+		CHAR buffer[BUFSIZE];
+		DWORD state; 
 		ipc_handler *handler;
-	} PIPEINST, *LPPIPEINST;
+		string truncate;
+	} PIPE;
 
 	enum PIPESTAT
 	{
-		CONNECTING_STATE,
-		READING_STATE
+		CONNECTING_PENDING,
+		CONNECTED,
+		READING_PENDING
 	};
 
-	PIPEINST Pipe[INSTANCES]; 
+	PIPE m_pipe[INSTANCES]; 
 	HANDLE hEvents[INSTANCES];
+	ipc_handler_factory *m_factory;
 
-	BOOL dsiconnect_pipe(PIPEINST &Pipe);
-	BOOL connect_pipe(PIPEINST &Pipe,ipc_handler_factory *factory);
+	BOOL dsiconnect_pipe(PIPE &Pipe,ipc_handler::ipc_handler_mode mode);
+	BOOL connect_pipe(PIPE &Pipe);
 };

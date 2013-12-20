@@ -8,25 +8,25 @@
 #include <string>
 using namespace std;
 
-ipc_server::ipc_server()
+ipc_server::ipc_server(ipc_handler_factory *factory):m_factory(factory)
 {
 	for(int i=0;i<INSTANCES;i++)
 	{
-		memset((char*)&Pipe[i],0,sizeof(PIPEINST));
+		memset((char*)&m_pipe[i],0,sizeof(PIPE));
 	}
 }
 
 
-BOOL ipc_server::dsiconnect_pipe(PIPEINST &Pipe)
+BOOL ipc_server::dsiconnect_pipe(PIPE &Pipe,ipc_handler::ipc_handler_mode mode)
 {
-	Pipe.handler->disconnect();
+	Pipe.handler->disconnect(mode);
 	Pipe.handler=NULL;
-	return DisconnectNamedPipe(Pipe.hPipeInst);
+	return DisconnectNamedPipe(Pipe.handle);
 }
 
-BOOL ipc_server::connect_pipe(PIPEINST &Pipe,ipc_handler_factory *factory)
+BOOL ipc_server::connect_pipe(PIPE &Pipe)
 {
-	if (ConnectNamedPipe(Pipe.hPipeInst,&(Pipe.oOverlap))) 
+	if (ConnectNamedPipe(Pipe.handle,&(Pipe.overlap))) 
 	{
 		assert(0);
 		return FALSE;
@@ -35,25 +35,14 @@ BOOL ipc_server::connect_pipe(PIPEINST &Pipe,ipc_handler_factory *factory)
 	DWORD err=GetLastError();
 	if(err==ERROR_IO_PENDING)
 	{
-		Pipe.fPendingIO = TRUE; 
-		Pipe.dwState=CONNECTING_STATE;
+		Pipe.state=CONNECTING_PENDING;
 		return TRUE; 
 	}
 	else if(err==ERROR_PIPE_CONNECTED)
 	{
-		Pipe.fPendingIO=FALSE;
-		Pipe.dwState=READING_STATE;
-		if (SetEvent(Pipe.oOverlap.hEvent))
-		{
-			Pipe.handler=factory->create();
-			Pipe.handler->connect();
-			return TRUE; 
-		}
-		else
-		{
-			assert(0);
-			return FALSE;
-		}
+		Pipe.state=CONNECTED;
+		SetEvent(Pipe.overlap.hEvent);
+		return TRUE;
 	}
 	else
 	{
@@ -64,12 +53,11 @@ BOOL ipc_server::connect_pipe(PIPEINST &Pipe,ipc_handler_factory *factory)
 
 
 
-DWORD ipc_server::serve(ipc_handler_factory* factory)
+DWORD ipc_server::serve()
 {
 
 	for (int i = 0; i < INSTANCES; i++) 
 	{
-
 		hEvents[i] = CreateEvent(NULL,TRUE,TRUE,NULL); 
 
 		if (hEvents[i] == NULL) 
@@ -78,9 +66,9 @@ DWORD ipc_server::serve(ipc_handler_factory* factory)
 			return -1;
 		}
 
-		Pipe[i].oOverlap.hEvent = hEvents[i]; 
+		m_pipe[i].overlap.hEvent = hEvents[i]; 
 
-		Pipe[i].hPipeInst = CreateNamedPipe( 
+		m_pipe[i].handle = CreateNamedPipe( 
 			lpszPipename,            // pipe name 
 			PIPE_ACCESS_DUPLEX |     // read/write access 
 			FILE_FLAG_OVERLAPPED,    // overlapped mode 
@@ -93,20 +81,19 @@ DWORD ipc_server::serve(ipc_handler_factory* factory)
 			PIPE_TIMEOUT,            // client time-out 
 			NULL);                   // default security attributes 
 
-		if (Pipe[i].hPipeInst == INVALID_HANDLE_VALUE) 
+		if (m_pipe[i].handle == INVALID_HANDLE_VALUE) 
 		{
 			assert(0);
 			return -2;
 		}
-
-		if(!connect_pipe(Pipe[i],factory))
-		{
-			assert(0);
-			return -3;
-		}
 	}
 
-	while (1)
+	for (int i = 0; i < INSTANCES; i++) 
+	{
+		connect_pipe(m_pipe[i]);
+	}
+
+	while (true)
 	{
 		DWORD i = WaitForMultipleObjects(INSTANCES,hEvents,FALSE,INFINITE) - WAIT_OBJECT_0;
 		if (i < 0 || i > (INSTANCES - 1)) 
@@ -115,86 +102,98 @@ DWORD ipc_server::serve(ipc_handler_factory* factory)
 			return -4;
 		}
 
-		if (Pipe[i].fPendingIO) 
-		{ 
-			DWORD cbRet;
-			BOOL fSuccess = GetOverlappedResult(Pipe[i].hPipeInst,&Pipe[i].oOverlap,&cbRet,FALSE);
+		if(m_pipe[i].state==CONNECTED)
+		{
+			m_pipe[i].handler=m_factory->create();
+			m_pipe[i].handler->connect(ipc_handler::sync_mode);
+		}
+		else if(m_pipe[i].state==CONNECTING_PENDING)
+		{
+			DWORD read;
+			BOOL fSuccess = GetOverlappedResult(m_pipe[i].handle,&m_pipe[i].overlap,&read,FALSE);
 
-			if(Pipe[i].dwState==CONNECTING_STATE)
+			if (!fSuccess) 
 			{
-				if (!fSuccess) 
-				{
-					assert(0); 
-					return -5;
-				}
+				connect_pipe(m_pipe[i]);
+				continue;
+			}
+			else
+			{
+				m_pipe[i].handler=m_factory->create();
+				m_pipe[i].handler->connect(ipc_handler::async_mode);
+			}
+		}
+		else if(m_pipe[i].state==READING_PENDING)
+		{
+			DWORD read;
+			BOOL fSuccess = GetOverlappedResult(m_pipe[i].handle,&m_pipe[i].overlap,&read,FALSE);
 
-				Pipe[i].dwState = READING_STATE;
-				Pipe[i].handler=factory->create();
-				Pipe[i].handler->connect();
+			if (fSuccess) 
+			{
+				ipc_handler::ipc_handler_mode mode=ipc_handler::async_mode;
+				if(!m_pipe[i].truncate.empty())
+				{
+					mode=ipc_handler::truncate_mode;
+				}
+				m_pipe[i].truncate=m_pipe[i].truncate+string(m_pipe[i].buffer,read);
+				m_pipe[i].handler->handle(mode,m_pipe[i].truncate);
+				m_pipe[i].truncate.resize(0);
 			}
 			else
 			{
 				DWORD err=GetLastError();
-				if (fSuccess && Pipe[i].cbRead != 0) 
+
+				if (err == ERROR_MORE_DATA)
 				{
-					Pipe[i].handler->handle(Pipe[i].chRequest,Pipe[i].cbRead);
+					m_pipe[i].truncate=m_pipe[i].truncate+string(m_pipe[i].buffer,read);
 				}
-				else if (!fSuccess && (err == ERROR_MORE_DATA)) 
+				else if (err == ERROR_BROKEN_PIPE)
 				{
-					Pipe[i].handler->exception();
-					if(!SetEvent(Pipe[i].oOverlap.hEvent))
-					{
-						assert(0);
-						return -7;
-					}
+					dsiconnect_pipe(m_pipe[i],ipc_handler::async_mode);
+					connect_pipe(m_pipe[i]); 
 					continue;
-				}
-				else if (!fSuccess && (err == ERROR_BROKEN_PIPE)) 
-				{ 
-					dsiconnect_pipe(Pipe[i]);
-					connect_pipe(Pipe[i],factory); 
-					continue; 
 				}
 				else
 				{
-					assert(0);
-					return -8;
+					m_pipe[i].handler->exception(ipc_handler::async_mode,ipc_handler::unknown);
+					dsiconnect_pipe(m_pipe[i],ipc_handler::async_mode);
+					connect_pipe(m_pipe[i]); 
+					continue;
 				}
-			}  
-		}
-
-		BOOL fSuccess = ReadFile(Pipe[i].hPipeInst,Pipe[i].chRequest,BUFSIZE,&Pipe[i].cbRead,&Pipe[i].oOverlap);
-
-		DWORD err=GetLastError();
-		if (fSuccess && Pipe[i].cbRead != 0) 
-		{
-			Pipe[i].fPendingIO = FALSE; 
-			Pipe[i].handler->handle(Pipe[i].chRequest,Pipe[i].cbRead);
-		}
-		else if (!fSuccess && (err == ERROR_IO_PENDING)) 
-		{ 
-			Pipe[i].fPendingIO = TRUE; 
-		}
-		else if (!fSuccess && (err == ERROR_MORE_DATA)) 
-		{
-			Pipe[i].handler->exception();
-			if(!SetEvent(Pipe[i].oOverlap.hEvent))
-			{
-				assert(0);
-				return -7;
 			}
 		}
-		else if (! fSuccess && (err == ERROR_BROKEN_PIPE)) 
+
+		BOOL fSuccess = ReadFile(m_pipe[i].handle,m_pipe[i].buffer,BUFSIZE,NULL,&m_pipe[i].overlap);
+
+		if (fSuccess)
 		{
-			dsiconnect_pipe(Pipe[i]);
-			connect_pipe(Pipe[i],factory);
+			m_pipe[i].state = READING_PENDING;
 		}
 		else
 		{
-			assert(0);
-			return -8;
+			DWORD err=GetLastError();
+			if (err == ERROR_MORE_DATA)
+			{
+				m_pipe[i].state = READING_PENDING;
+			}
+			else if (err == ERROR_IO_PENDING)
+			{
+				m_pipe[i].state = READING_PENDING;
+			}
+			else if (err == ERROR_BROKEN_PIPE)
+			{
+
+				dsiconnect_pipe(m_pipe[i],ipc_handler::sync_mode);
+				connect_pipe(m_pipe[i]);
+			}
+			else
+			{
+				m_pipe[i].handler->exception(ipc_handler::sync_mode,ipc_handler::unknown);
+				dsiconnect_pipe(m_pipe[i],ipc_handler::sync_mode);
+				connect_pipe(m_pipe[i]);
+			}
 		}
-	} 
+	}
 
 	return 0; 
 } 
