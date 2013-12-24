@@ -3,7 +3,9 @@
 
 #include "stdafx.h"
 #include "window.h"
-#include <CommCtrl.h>
+#include "main_win.h"
+#include "ui_printer.h"
+#include "ipc_server.h"
 
 #define MAX_LOADSTRING 100
 
@@ -19,39 +21,43 @@ LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 HWND CreateListView (HWND hwndParent);
 
+
+unsigned __stdcall threadproc(void* arg)
+{
+	ui_printer_factory prfct=ui_printer_factory(HWND(arg));
+	ipc_server pps(&prfct);
+	pps.serve();
+	return 0;
+}
+
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPTSTR    lpCmdLine,
                      int       nCmdShow)
 {
+
+	if(!CreateMutex(NULL,TRUE,L"E24EE079-73DC-4617-8658-5FAB54BD1F13") || GetLastError()==ERROR_ALREADY_EXISTS)
+	{
+		return 0;
+	}
+
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
  	// TODO: Place code here.
 	MSG msg;
-	HACCEL hAccelTable;
-
-	// Initialize global strings
-	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-	LoadString(hInstance, IDC_WINDOW, szWindowClass, MAX_LOADSTRING);
-	MyRegisterClass(hInstance);
-
-	// Perform application initialization:
-	if (!InitInstance (hInstance, nCmdShow))
-	{
-		return FALSE;
-	}
-
-	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WINDOW));
+	
+	MainWin mw;
+	mw.Create(NULL);
+	mw.ShowWindow(SW_SHOW);
+	
+	_beginthreadex(0,0,threadproc,mw.m_listview.m_hWnd,0,0);
 
 	// Main message loop:
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
-		if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
 	}
 
 	return (int) msg.wParam;
