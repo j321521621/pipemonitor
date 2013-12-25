@@ -83,6 +83,7 @@
     <ClInclude Include="ipc_handler.h" />
     <ClInclude Include="main_win.h" />
     <ClInclude Include="printer.h" />
+    <ClInclude Include="process_manager_win.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />

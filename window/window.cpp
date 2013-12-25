@@ -51,7 +51,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	mw.Create(NULL);
 	mw.ShowWindow(SW_SHOW);
 	
-	_beginthreadex(0,0,threadproc,mw.m_listview.m_hWnd,0,0);
+	_beginthreadex(0,0,threadproc,mw.m_hWnd,0,0);
 
 	// Main message loop:
 	while (GetMessage(&msg, NULL, 0, 0))
