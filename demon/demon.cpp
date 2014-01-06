@@ -5,6 +5,7 @@
 #include "demon.h"
 
 #define MAX_LOADSTRING 100
+#define MAX_LOADSTRING 100
 
 // Global Variables:
 HINSTANCE hInst;								// current instance

@@ -22,6 +22,9 @@
     <Filter Include="Source Files\cli">
       <UniqueIdentifier>{3037c0f3-dc6b-44bc-ac43-64311dea715c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\common">
+      <UniqueIdentifier>{e8302426-9573-4c73-86e7-44a3d93c9e04}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -69,6 +72,9 @@
     <ClInclude Include="process_manager_win.h">
       <Filter>Source Files\gui</Filter>
     </ClInclude>
+    <ClInclude Include="common.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -82,6 +88,9 @@
     </ClCompile>
     <ClCompile Include="ui_printer.cpp">
       <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="common.cpp">
+      <Filter>Source Files\common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -80,7 +80,7 @@ inject_ret inject(DWORD pid,LPWSTR path)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	if(inject(getpid(L"notepad++.exe"),L"E:\\code\\me\\pipemonitor\\Debug\\injectdll.dll")!=S_INJECT)
+	if(inject(getpid(L"notepad++.exe"),L"C:\\code\\me\\pipemonitor\\Debug\\injectdll.dll")!=S_INJECT)
 	{
 		assert(0);
 		return -2;

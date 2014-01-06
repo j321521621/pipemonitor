@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ipc.h"
 #include <tlhelp32.h>
+#include <time.h>
 
 ipc* logger;
 
@@ -27,44 +28,53 @@ wstring getprocessname(int pid)
 	return ret;
 };
 
+
 bool ipc::init()
 {
-	m_pipe=CreateFile(L"\\\\.\\pipe\\1CA1185E-3F67-4AC4-B7A4-7CAADC9F994E",GENERIC_WRITE,NULL,NULL,OPEN_EXISTING,NULL,NULL);
-	if(m_pipe==INVALID_HANDLE_VALUE)
-	{
-		DWORD err=GetLastError();
-		return false;
-	}
-	m_inited=true;
-	int pid=GetCurrentProcessId();
-	wstringstream ss;
-	ss<<L"connected from pid "<<pid<<" "<<getprocessname(pid);
-	send(ss.str());
+	m_pid=GetCurrentProcessId();
+	m_pname=getprocessname(m_pid);
 
 	return true;
 }
 
 bool ipc::send(wstring str)
 {
-	if(!m_inited)
+	time_t current=time(NULL);
+	if(m_pipe==INVALID_HANDLE_VALUE && current-m_last_connect_time >10)
+	{
+		m_last_connect_time=current;
+		m_pipe=CreateFile(L"\\\\.\\pipe\\1CA1185E-3F67-4AC4-B7A4-7CAADC9F994E",GENERIC_WRITE,NULL,NULL,OPEN_EXISTING,NULL,NULL);
+
+		wstringstream ss;
+		ss<<L"connected from pid "<<m_pid<<" "<<m_pname;
+		send_internal(ss.str());
+	}
+
+	return send_internal(str);
+}
+
+bool ipc::send_internal(wstring str)
+{
+	if(m_pipe==INVALID_HANDLE_VALUE)
 	{
 		return false;
 	}
 
 	DWORD written;
-	if(!OLD_WriteFile(m_pipe,str.c_str(),2*str.size(),&written,NULL))
+	if(OLD_WriteFile(m_pipe,str.c_str(),2*str.size(),&written,NULL))
 	{
-		m_inited=false;
+		return true;
+	}
+	else
+	{
+		m_pipe=INVALID_HANDLE_VALUE;
 		return false;
 	}
-
-	return true;
 }
 
 void ipc::unint()
 {
 	send(L"disconnected");
 	CloseHandle(m_pipe);
-	m_pipe=NULL;
-	m_inited=false;
+	m_pipe=INVALID_HANDLE_VALUE;
 }

@@ -8,6 +8,7 @@
 #include <wtl80/atlctrls.h>
 #include <mshtmcid.h>
 #include "ui_printer_data.h"
+#include "common.h"
 
 #include "vt.h"
 
@@ -21,8 +22,6 @@ public:
 	{
 		SetExtendedListViewStyle(LVS_EX_GRIDLINES|LVS_EX_FULLROWSELECT|LVS_EX_DOUBLEBUFFER|LVS_EX_AUTOSIZECOLUMNS);
 	}
-
-
 };
 
 class MyToolBar: public CWindowImpl<MyToolBar,CToolBarCtrl,CWinTraitsOR<0,0,CControlWinTraits>>
@@ -45,11 +44,68 @@ class ProductManagerWin : public CDialogImpl<ProductManagerWin,CWindow>
 {
 public:
 	BEGIN_MSG_MAP_EX(MainWin)
+		MSG_WM_INITDIALOG(OnInitDialog)
+		MSG_WM_CLOSE(OnClose)
+		MSG_WM_TIMER(OnTimer)
+		MSG_WM_NOTIFY(OnNotify)
 	END_MSG_MAP()
 
 	static DWORD const IDD=IDD_DIALOG1;
 
+	BOOL OnInitDialog(CWindow wndFocus, LPARAM lInitParam)
+	{
+		CRect rc;
+		GetClientRect(&rc);
+		m_listview.Create(m_hWnd,rc);
+		m_listview.InitStyle();
+		m_listview.AddColumn(L"进程ID", 0);
+		m_listview.SetColumnWidth(0,100);
+		m_listview.AddColumn(L"进程名", 1);
+		m_listview.SetColumnWidth(1,200);
+		m_listview.AddColumn(L"命令行", 2);
+		m_listview.SetColumnWidth(2,300);
+		Update();
 
+		return TRUE;
+	}
+
+	void OnClose()
+	{
+		EndDialog(0);
+	}
+
+	void OnTimer(UINT_PTR nIDEvent)
+	{
+	}
+
+	LRESULT OnNotify(int idCtrl, LPNMHDR pnmh)
+	{
+		if(pnmh->hwndFrom==m_listview && pnmh->code==NM_DBLCLK)
+		{
+			LPNMITEMACTIVATE lpnmitem = (LPNMITEMACTIVATE) pnmh;
+			BSTR text;
+			m_listview.GetItemText(lpnmitem->iSubItem,0,&text);
+			EndDialog(0);
+		}
+		return 0;
+	}
+
+private:
+
+	void Update()
+	{
+		m_listview.SetRedraw(FALSE);
+		m_listview.DeleteAllItems();
+		vector<vector<wstring>> ps=common::proc_snapshot();
+		for(vector<vector<wstring>>::iterator it=ps.begin();it!=ps.end();++it)
+		{
+			m_listview.AddItem(0,0,(*it)[0].c_str());
+			m_listview.AddItem(0,1,(*it)[1].c_str());
+		}
+		m_listview.SetRedraw(TRUE);
+	}
+
+	MyListView m_listview;
 };
 
 class MainWin : public CWindowImpl<MainWin,CWindow,CFrameWinTraits>
@@ -99,10 +155,7 @@ public:
 
 		void OnClose()
 		{
-			if(MessageBox(L"退出后现有链接将关闭,确认退出么?",L"退出",MB_OKCANCEL)==IDOK)
-			{
-				SetMsgHandled(FALSE);
-			}
+			SetMsgHandled(FALSE);
 		}
 
 		void OnDestroy()

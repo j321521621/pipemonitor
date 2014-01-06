@@ -9,16 +9,22 @@ using namespace std;
 class ipc
 {
 public:
-	ipc():m_pipe(NULL),m_inited(false)
+	ipc():m_pid(0),m_pipe(INVALID_HANDLE_VALUE)
 	{
+
 	}
 
 	bool init();
 	bool send(wstring str);
 	void unint();
 
+private:
+	bool send_internal(wstring str);
+
 	HANDLE m_pipe;
-	bool m_inited;
+	int m_pid;
+	wstring m_pname;
+	time_t m_last_connect_time;
 };
 
 extern ipc* logger;

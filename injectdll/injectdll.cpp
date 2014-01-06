@@ -25,7 +25,7 @@ vector<HANDLE> allthread()
 
 	DWORD dwOwnerPID=GetCurrentProcessId();
 	THREADENTRY32 te32; 
-	te32.dwSize = sizeof(THREADENTRY32 ); 
+	te32.dwSize = sizeof(THREADENTRY32); 
 
 	if( !Thread32First( hThreadSnap, &te32 ) ) 
 	{
@@ -73,7 +73,7 @@ DWORD Hook(PVOID *ppPointer,PVOID pDetour)
 }
 
 
-unsigned __stdcall threadproc(void*)
+unsigned __stdcall start(void*)
 {
 	::MessageBox(NULL,L" success",L"注入成功",MB_OK);
 
@@ -85,5 +85,11 @@ unsigned __stdcall threadproc(void*)
 	}
 
 	Hook(&(PVOID&)OLD_WriteFile,NEW_WriteFile);
+	return 0;
+}
+
+unsigned __stdcall finish(void*)
+{
+	::MessageBox(NULL,L" success",L"退出成功",MB_OK);
 	return 0;
 }
