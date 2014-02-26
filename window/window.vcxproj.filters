@@ -25,6 +25,9 @@
     <Filter Include="Source Files\common">
       <UniqueIdentifier>{e8302426-9573-4c73-86e7-44a3d93c9e04}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\doctor">
+      <UniqueIdentifier>{9dadb7b7-a18e-4f40-9561-040fcd93669a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -75,6 +78,9 @@
     <ClInclude Include="common.h">
       <Filter>Source Files\common</Filter>
     </ClInclude>
+    <ClInclude Include="doctor.h">
+      <Filter>Source Files\doctor</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -91,6 +97,9 @@
     </ClCompile>
     <ClCompile Include="common.cpp">
       <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="doctor.cpp">
+      <Filter>Source Files\doctor</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

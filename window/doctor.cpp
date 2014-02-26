@@ -2,7 +2,7 @@
 //
 
 #include "stdafx.h"
-#include <windows.h>
+#include "doctor.h"
 #include <tlhelp32.h>
 #include <Psapi.h>
 #include <string>
@@ -10,15 +10,7 @@
 #include <assert.h>
 using namespace::std;
 
-typedef enum 
-{
-	S_INJECT,
-	E_INJECT_OPENPROCESS,
-	E_INJECT_VIRTUALALLOCEX,
-	E_INJECT_WRITEPROCESSMEMORY,
-	E_INJECT_GETMODULEHANDLE,
-	E_INJECT_CREATEREMOTETHREAD,
-} inject_ret;
+
 
 DWORD getpid(wstring processname)
 {
@@ -43,8 +35,10 @@ DWORD getpid(wstring processname)
 	return ret;
 };
 
-inject_ret inject(DWORD pid,LPWSTR path)
+inject_ret inject(DWORD pid,LPWSTR inpath)
 {
+	TCHAR path[MAX_PATH];
+	GetFullPathName(inpath,MAX_PATH,path,NULL);
 	HANDLE hProcess=OpenProcess(PROCESS_ALL_ACCESS,FALSE,pid);
 	if(hProcess==NULL)
 	{
@@ -75,14 +69,4 @@ inject_ret inject(DWORD pid,LPWSTR path)
 	}
 
 	return S_INJECT;
-}
-
-
-int _tmain(int argc, _TCHAR* argv[])
-{
-	if(inject(getpid(L"notepad++.exe"),L"C:\\code\\me\\pipemonitor\\Debug\\injectdll.dll")!=S_INJECT)
-	{
-		assert(0);
-		return -2;
-	}
 }

@@ -75,21 +75,12 @@ DWORD Hook(PVOID *ppPointer,PVOID pDetour)
 
 unsigned __stdcall start(void*)
 {
-	::MessageBox(NULL,L" success",L"注入成功",MB_OK);
-
 	logger=new ipc();
 	if(!logger->init())
 	{
-		::MessageBox(NULL,L"error",L"管道初始化失败",MB_OK);
 		return -1;
 	}
 
 	Hook(&(PVOID&)OLD_WriteFile,NEW_WriteFile);
-	return 0;
-}
-
-unsigned __stdcall finish(void*)
-{
-	::MessageBox(NULL,L" success",L"退出成功",MB_OK);
 	return 0;
 }

@@ -20,7 +20,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	case DLL_THREAD_DETACH:
 		break;
 	case DLL_PROCESS_DETACH:
-		_beginthreadex(NULL,NULL,finish,NULL,NULL,NULL);
 		break;
 	}
 	return TRUE;

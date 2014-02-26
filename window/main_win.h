@@ -9,6 +9,7 @@
 #include <mshtmcid.h>
 #include "ui_printer_data.h"
 #include "common.h"
+#include "doctor.h"
 
 #include "vt.h"
 
@@ -83,9 +84,9 @@ public:
 		if(pnmh->hwndFrom==m_listview && pnmh->code==NM_DBLCLK)
 		{
 			LPNMITEMACTIVATE lpnmitem = (LPNMITEMACTIVATE) pnmh;
-			BSTR text;
-			m_listview.GetItemText(lpnmitem->iSubItem,0,&text);
-			EndDialog(0);
+			WCHAR title[4096];
+			m_listview.GetItemText(lpnmitem->iItem,0,title,4096);
+			EndDialog(_wtoi(title));
 		}
 		return 0;
 	}
@@ -178,7 +179,19 @@ public:
 
 		void OnOpen(UINT uNotifyCode, int nID, CWindow wndCtl)
 		{
-			m_pm.DoModal();
+			int pid=m_pm.DoModal();
+			if(pid==0)
+			{
+				return;
+			}
+
+			inject_ret rslt=inject(pid,L"..\\Debug\\injectdll.dll");
+			if(rslt!=S_INJECT)
+			{
+				wstringstream ss;
+				ss<<L"×¢ÈëÊ§°Ü("<<rslt<<L"),pid="<<pid;
+				::MessageBox(m_hWnd,ss.str().c_str(),L"×¢ÈëÊ§°Ü" ,MB_OK);
+			}
 		}
 
 MyListView m_listview;
